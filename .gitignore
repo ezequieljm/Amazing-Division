@@ -1,0 +1,15 @@
+# Dependencias (se descargan localmente, no se suben)
+node_modules/
+
+# Archivos de compilación de TypeScript
+dist/
+
+# Archivos de cobertura de pruebas (si usas Jest)
+coverage/
+
+# Configuración del editor (opcional, p. ej. VS Code)
+.vscode/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
