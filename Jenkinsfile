@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:20-alpine'
+            args '-u root' 
+        }
+    }
 
     environment {
         NODE_ENV = 'development'
@@ -8,13 +13,13 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                echo 'Cloning repository from GitHub...'
+                echo 'Repository already cloned by Jenkins SCM.'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                echo 'Installing node modules...'
+                echo 'Installing node modules inside Node container...'
                 sh 'npm install'
             }
         }
