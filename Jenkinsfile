@@ -1,104 +1,61 @@
-// pipeline {
-//     agent {
-//         docker {
-//             image 'node:20-alpine'
-//             args '-u root'
-//         }
-//     }
-
-//     environment {
-//         NODE_ENV = 'development'
-        
-//         DOCKER_HOST = 'tcp://jenkins-docker:2376'
-        
-//         DOCKER_CERT_PATH = ''
-//         DOCKER_TLS_VERIFY = ''
-//     }
-
-//     stages {
-//         stage('Checkout') {
-//             steps {
-//                 echo 'Repository already cloned by Jenkins SCM.'
-//             }
-//         }
-
-//         stage('Install Dependencies') {
-//             steps {
-//                 echo 'Installing node modules inside Node container...'
-//                 sh 'npm install'
-//             }
-//         }
-
-//         stage('Run Tests') {
-//             steps {
-//                 echo 'Executing Jest automation tests...'
-//                 sh 'npm test'
-//             }
-//         }
-
-//         stage('Build Project') {
-//             steps {
-//                 echo 'Compiling TypeScript code to JavaScript...'
-//                 sh 'npm run build'
-//             }
-//         }
-//     }
-
-//     post {
-//         success {
-//             echo 'FEEDBACK: Build and tests passed successfully! The code is healthy.'
-//         }
-//         failure {
-//             echo 'FEEDBACK: The pipeline failed. Check the logs above to find the bug.'
-//         }
-//     }
-// }
-
-
-
 pipeline {
+    // We use agent any because we will execute Docker commands via native Shell
     agent any 
 
     environment {
-        DOCKER_HOST = 'tcp://docker:2376'
-        NODE_IMAGE  = 'node:20-alpine'
+        // Variables to build and deploy the application container
+        IMAGE_NAME = 'safediv-app'
+        IMAGE_TAG  = 'latest'
+        CONTAINER_NAME = 'safediv-production-server'
+        PORT_APP = '80' 
     }
 
     stages {
-        stage('Checkout') {
+        // === FASE CI (Continous Integration) ===
+        stage('Install & Test & Build') {
             steps {
-                echo 'Repository already cloned by Jenkins SCM.'
+                echo 'Running CI operations...'
+                // We use the official Node.js 20 Alpine image to run npm install, test and build inside a container
+                sh "docker run --rm -u root -v ${WORKSPACE}:/app -w /app node:20-alpine sh -c 'npm install && npm test && npm run build'"
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Docker Package (CI)') {
             steps {
-                echo 'Running npm install inside an isolated Node container...'
-                sh "docker run --rm -u root -v ${WORKSPACE}:/app -w /app ${NODE_IMAGE} npm install"
+                echo 'Building Application Docker Image...'
+                // We compile the production image using the Dockerfile in the root of the project, which uses the build output from the previous stage
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
         }
 
-        stage('Run Tests') {
+        // === FASE CD (Continuous Deployment) ===
+        stage('Local Deploy (CD)') {
             steps {
-                echo 'Executing Jest automation tests...'
-                sh "docker run --rm -u root -v ${WORKSPACE}:/app -w /app ${NODE_IMAGE} npm test"
-            }
-        }
+                echo 'Deploying application container locally...'
+                
+                // If the container with the same name is running, we stop and remove it to avoid conflicts with the new one
+                sh """
+                    if docker ps -a --format '{{.Names}}' | grep -Eq "^${CONTAINER_NAME}\$"; then
+                        echo "Stopping and removing old container..."
+                        docker stop ${CONTAINER_NAME} || true
+                        docker rm ${CONTAINER_NAME} || true
+                    fi
+                """
 
-        stage('Build Project') {
-            steps {
-                echo 'Compiling TypeScript code to JavaScript...'
-                sh "docker run --rm -u root -v ${WORKSPACE}:/app -w /app ${NODE_IMAGE} npm run build"
+                // We run the new container mapping the internal port 3000 of Express to port 80 of the dind docker container
+                sh "docker run --name ${CONTAINER_NAME} -d -p ${PORT_APP}:3000 ${IMAGE_NAME}:${IMAGE_TAG}"
+                
+                echo "Application deployed successfully"
             }
         }
     }
 
     post {
         success {
-            echo 'FEEDBACK: Build and tests passed successfully! The code is healthy.'
+            echo 'FEEDBACK: CI/CD Pipeline completed! App is live.'
         }
         failure {
-            echo 'FEEDBACK: The pipeline failed. Check the logs above to find the bug.'
+            echo 'FEEDBACK: Pipeline failed. Check the stage logs.'
         }
     }
 }
