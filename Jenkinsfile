@@ -1,15 +1,18 @@
 pipeline {
-    environment {
-        NODE_ENV = 'development'
-        DOCKER_HOST = 'tcp://172.18.0.2:2375'
-        DOCKER_TLS_VERIFY = ''
-    }
-
     agent {
         docker {
             image 'node:20-alpine'
             args '-u root'
         }
+    }
+
+    environment {
+        NODE_ENV = 'development'
+        
+        DOCKER_HOST = 'tcp://jenkins-docker:2376'
+        
+        DOCKER_CERT_PATH = ''
+        DOCKER_TLS_VERIFY = ''
     }
 
     stages {
