@@ -60,7 +60,7 @@ pipeline {
     agent any 
 
     environment {
-        DOCKER_HOST = 'tcp://jenkins-docker:2376'
+        DOCKER_HOST = 'tcp://docker:2376'
         NODE_IMAGE  = 'node:20-alpine'
     }
 
