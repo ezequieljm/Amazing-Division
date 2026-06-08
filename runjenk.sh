@@ -41,4 +41,6 @@ else
     docker start jenkins-blueocean
 fi
 
-echo "Jenkins is running. Access it at http://localhost:8080"
+ipdocker=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.GlobalIPv6Address}}{{end}}' jenkins-blueocean)
+
+echo "Jenkins is running. Access it at http://[$ipdocker]:8080"
