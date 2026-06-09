@@ -3,13 +3,13 @@
 echo "Starting Jenkins..."
 
 # 1. Create the network if it doesn't exist
-docker network inspect jenkins >/dev/null 2>&1 || \
-	(echo "Creating Jenkins network..." && docker network create --ipv6 --subnet=fd42:dead:beef:0001::/64 jenkins)
+docker network inspect jenkinsnet >/dev/null 2>&1 || \
+	(echo "Creating Jenkins network..." && docker network create jenkinsnet)
 
 # 2. Run Jenkins container (DinD - Docker in Docker)
 echo "Running Jenkins container DinD..."
 docker run --name jenkins-docker --rm --detach \
-    --privileged --network jenkins \
+    --privileged --network jenkinsnet \
     --network-alias docker \
     --network-alias jenkins-docker \
     --env DOCKER_TLS_CERTDIR=/certs \
@@ -28,7 +28,7 @@ sleep 5
 if [ "$(docker ps -a -f name=jenkins-blueocean | grep -c jenkins-blueocean)" -eq 0 ]; then
     echo "Creating and running Jenkins container..."
     docker run --name jenkins-blueocean --rm --detach \
-        --network jenkins \
+        --network jenkinsnet \
 	--env DOCKER_HOST=tcp://docker:2376 \
         --env DOCKER_CERT_PATH=/certs/client \
 	--env DOCKER_TLS_VERIFY=1 \
@@ -41,6 +41,7 @@ else
     docker start jenkins-blueocean
 fi
 
-ipdocker=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.GlobalIPv6Address}}{{end}}' jenkins-blueocean)
+# ipdocker=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.GlobalIPv6Address}}{{end}}' jenkins-blueocean)
+ipdocker=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' jenkins-blueocean)
 
 echo "Jenkins is running. Access it at http://[$ipdocker]:8080"
