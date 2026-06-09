@@ -51,11 +51,50 @@ pipeline {
     }
 
     post {
-        success {
-            echo 'FEEDBACK: CI/CD Pipeline completed! App is live.'
-        }
-        failure {
-            echo 'FEEDBACK: Pipeline failed. Check the stage logs.'
+            success {
+                echo 'FEEDBACK: CI/CD Pipeline completed! App is live.'
+                
+                mail to: "${env.NOTIFY_EMAIL}",
+                    subject: "Jenkins Pipeline SUCCESS: Job '${env.JOB_NAME}' [Build #${env.BUILD_NUMBER}]",
+                    body: """Hi!
+                    
+                    The project has been built, tested and deployed to production without any issues.
+                    
+                    Details of the execution:
+                    - Project: ${env.JOB_NAME}
+                    - Build Number: #${env.BUILD_NUMBER}
+                    - Branch: ${env.BRANCH_NAME ?: 'main'}
+                    
+                    The TypeScript code was compiled, the Jest tests passed in green and the Docker container is running in production on port ${env.PORT_APP}.
+                    
+                    You can view the complete logs here: ${env.BUILD_URL}
+                    
+                    Best regards,
+                    Your Jenkins Server."""
+            }
+            
+            failure {
+                echo 'FEEDBACK: Pipeline failed. Check the stage logs.'
+                
+                mail to: "${env.NOTIFY_EMAIL}",
+                    subject: "Jenkins Pipeline FAILED: Job '${env.JOB_NAME}' [Build #${env.BUILD_NUMBER}]",
+                    body: """Warning! The Pipeline FAILED."
+                    
+                    Detected an error during the CI/CD cycle execution.
+                    
+                    Details of the failure:
+                    - Project: ${env.JOB_NAME}
+                    - Build Number: #${env.BUILD_NUMBER}
+                    
+                    It is very likely that one of the automated tests failed or that there was a compilation error in the TypeScript code. The deployment to production was canceled to protect the environment.
+                    
+                    Please review the console output immediately to fix the bug:
+                    👉 ${env.BUILD_URL}console
+                    
+                    Best regards,
+                    Your Jenkins Server."""
+            }
         }
     }
+
 }
