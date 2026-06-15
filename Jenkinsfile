@@ -4,9 +4,9 @@ pipeline {
 
     environment {
         // Variables to build and deploy the application container
-        IMAGE_NAME = 'safediv-app'
-        IMAGE_TAG  = 'latest'
-        CONTAINER_NAME = 'safediv-production-server'
+        IMAGE_NAME = 'amazingdiv-app'
+        IMAGE_TAG  = "${env.BRANCH_NAME ?:'latest'}"
+        CONTAINER_NAME = "amazingdiv-server-${env.BRANCH_NAME ?: 'prod'}"
         PORT_APP = '80' 
     }
 
@@ -14,7 +14,7 @@ pipeline {
         // === FASE CI (Continous Integration) ===
         stage('Install & Test & Build') {
             steps {
-                echo 'Running CI operations...'
+                echo "Running CI operations on branch ${env.BRANCH_NAME ?: 'unknown'}"
                 // We use the official Node.js 20 Alpine image to run npm install, test and build inside a container
                 sh "docker run --rm -u root -v ${WORKSPACE}:/app -w /app node:20-alpine sh -c 'npm install && npm test && npm run build'"
             }
@@ -22,7 +22,7 @@ pipeline {
 
         stage('Docker Package (CI)') {
             steps {
-                echo 'Building Application Docker Image...'
+                echo "Building Application Docker Image: ${IMAGE_NAME}:${IMAGE_TAG}"
                 // We compile the production image using the Dockerfile in the root of the project, which uses the build output from the previous stage
                 sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
             }
