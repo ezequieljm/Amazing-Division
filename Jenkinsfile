@@ -41,7 +41,7 @@ pipeline {
                     fi
                 """
 
-                sh "docker run --name ${CONTAINER_NAME} --network jenkinsnet --network-alias ${CONTAINER_NAME} -d ${IMAGE_NAME}:${IMAGE_TAG}"
+                sh "docker run --name ${CONTAINER_NAME} -p 3000:3000 -d ${IMAGE_NAME}:${IMAGE_TAG}"
                 echo "Application deployed successfully inside the Jenkins network."
 
             }
