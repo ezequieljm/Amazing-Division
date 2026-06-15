@@ -33,7 +33,6 @@ pipeline {
             steps {
                 echo 'Deploying application container locally...'
                 
-                // If the container with the same name is running, we stop and remove it to avoid conflicts with the new one
                 sh """
                     if docker ps -a --format '{{.Names}}' | grep -Eq "^${CONTAINER_NAME}\$"; then
                         echo "Stopping and removing old container..."
@@ -42,10 +41,9 @@ pipeline {
                     fi
                 """
 
-                // We run the new container mapping the internal port 3000 of Express to port 80 of the dind docker container
-                sh "docker run --name ${CONTAINER_NAME} -d -p ${PORT_APP}:3000 ${IMAGE_NAME}:${IMAGE_TAG}"
-                
-                echo "Application deployed successfully"
+                sh "docker run --name ${CONTAINER_NAME} --network jenkins --network-alias ${CONTAINER_NAME} -d ${IMAGE_NAME}:${IMAGE_TAG}"
+                echo "Application deployed successfully inside the Jenkins network."
+
             }
         }
     }
