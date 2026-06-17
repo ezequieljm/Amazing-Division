@@ -12,7 +12,7 @@ describe('safediv', () => {
     test('Must return a Failure object when attempting to divide by zero', () => {
         const result = safediv(4, 0);
         expect(result.tag).toBe('failure');
-        if (result.tag === 'failure') expect(result.value).toBe('Division by zero is not allowed');
+        if (result.tag === 'failure') expect(result.value).toBe('Division by zero is not allowed!!');
     });
 
 });
