@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
-import { div } from './div';
+import { safediv } from './safediv';
 
 const app = express();
 const PORT = 3000;
@@ -11,24 +11,11 @@ app.get('/api/divide', (req: Request, res: Response) => {
     const n1 = Number(req.query.n1);
     const n2 = Number(req.query.n2);
 
-    try {
-        const result = div(n1, n2);
+    const result = safediv(n1, n2);
 
-        // JavaScript returns Infinity for x/0. 
-        // We throw a generic system exception because this unhandled case crashes our business logic standard.
-        if (!isFinite(result)) {
-            throw new Error("System Error: Unhandled mathematical exception occurred.");
-        }
-
-        return res.status(200).json({ result });
-    } catch (error: any) {
-        // SERVER LOG: The developer sees a raw, ugly system crash log
-        console.error(`[CRITICAL CRASH LOG]: ${error.message}`);
-        
-        // BROWSER: The user just gets a completely generic 500 status with an unhelpful message
-        // because the error wasn't gracefully handled or mapped.
-        return res.status(500).json({ error: "Internal Server Error" });
-    }
+    (result.tag === 'success')
+        ? res.status(200).json({ status: 'success', value: result.value })
+        : res.status(200).json({ status: 'failure', error: result.value })
 });
 
 app.listen(PORT, () => {

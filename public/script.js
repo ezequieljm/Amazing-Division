@@ -15,15 +15,10 @@ document.getElementById('btnCalculate').addEventListener('click', async () => {
         const response = await fetch(`/api/divide?n1=${n1}&n2=${n2}`);
         const data = await response.json();
 
-        if (response.ok) {
-            // Display successful calculation
-            resultContainer.style.color = 'green';
-            resultContainer.innerHTML = `<h1>Result: ${data.result}</h1>`;
-        } else {
-            // Server responded with an error status (e.g., 500) due to an exception
-            resultContainer.style.color = 'red';
-            resultContainer.innerHTML = `<h1>Error: ${data.error}</h1>`;
-        }
+        (data.status === 'success') 
+            ? (resultContainer.style.color = 'green', resultContainer.innerHTML = `<h1>Result: ${data.value}</h1>`)
+            : (resultContainer.style.color = 'red', resultContainer.innerHTML = `<h1>Error: ${data.error}</h1>`)
+
     } catch (error) {
         // Handles network issues or total server crash
         resultContainer.style.color = 'red';
